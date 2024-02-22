@@ -2,6 +2,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:share_ryde/authentication/authentication.dart';
 import 'package:share_ryde/authentication/utils/utils.dart';
+import 'package:share_ryde/methods/methods.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -16,7 +17,31 @@ class _SignUpScreenState extends State<SignUpScreen> {
   TextEditingController emailTextEditingController = TextEditingController();
   TextEditingController passwordTextEditingController = TextEditingController();
 
-  checkIfNetworkIsAvailable() {}
+  CommonMethods commonMethods = CommonMethods();
+
+  checkIfNetworkIsAvailable() {
+    commonMethods.checkConectivity(context);
+
+    signUpFormValidation();
+  }
+
+  signUpFormValidation() {
+    if (nameTextEditingController.text.trim().length < 4) {
+      commonMethods.displaySnackBar(
+          context, 'Your name has to be at least 4 characters.');
+    } else if (phoneTextEditingController.text.trim().length < 9) {
+      commonMethods.displaySnackBar(
+          context, 'Your phone has to be at least 9 characters.');
+    } else if (!emailTextEditingController.text.contains('@')) {
+      commonMethods.displaySnackBar(
+          context, 'Please write a valid email address.');
+    } else if (passwordTextEditingController.text.trim().length < 6) {
+      commonMethods.displaySnackBar(
+          context, 'Your phone has to be at least 6 characters.');
+    }
+
+    // register user
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -98,12 +123,16 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       children: [
                         TextButton(
                           onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const LoginScreen(),
-                              ),
-                            );
+                            if (checkIfNetworkIsAvailable() == true) {
+                            } else {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const LoginScreen(),
+                                ),
+                              );
+                            }
+                            //dar uma olhada nessa função aqui, não está entrando mesmo com internet
                           },
                           child: const Text(
                             'Sign up',

@@ -1,7 +1,15 @@
+// ignore_for_file: body_might_complete_normally_catch_error
+
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:share_ryde/authentication/authentication.dart';
 import 'package:share_ryde/authentication/utils/utils.dart';
+import 'package:share_ryde/global/global.dart';
+import 'package:share_ryde/methods/methods.dart';
+import 'package:share_ryde/pages/pages.dart';
+import 'package:share_ryde/widgets/widgets.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -13,6 +21,78 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   TextEditingController emailTextEditingController = TextEditingController();
   TextEditingController passwordTextEditingController = TextEditingController();
+
+  CommonMethods commonMethods = CommonMethods();
+
+  checkIfNetworkIsAvailable() {
+    commonMethods.checkConectivity(context);
+
+    loginFormValidation();
+  }
+
+  loginFormValidation() {
+    if (!emailTextEditingController.text.contains('@')) {
+      commonMethods.displaySnackBar(context, 'Please write a valid e-mail.');
+    } else if (passwordTextEditingController.text.trim().length < 6) {
+      commonMethods.displaySnackBar(
+          context, 'Your password must to be at least 6 characters');
+    } else {
+      userLogin();
+    }
+  }
+
+  userLogin() async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) =>
+          const LoadingDialog(messageText: 'Logging into your account...'),
+    );
+
+    final User? userFirebase = (await FirebaseAuth.instance
+            .signInWithEmailAndPassword(
+      email: emailTextEditingController.text.trim(),
+      password: passwordTextEditingController.text.trim(),
+    )
+            .catchError((errorMensage) {
+      Navigator.pop(context);
+      commonMethods.displaySnackBar(
+        context,
+        errorMensage.toString(),
+      );
+    }))
+        .user;
+
+    if (!context.mounted) return;
+    Navigator.pop(context);
+
+    if (userFirebase != null) {
+      DatabaseReference usersRef = FirebaseDatabase.instance
+          .ref()
+          .child('users')
+          .child(userFirebase.uid);
+      usersRef.once().then((value) {
+        if (value.snapshot.value != null) {
+          if ((value.snapshot.value as Map)['blockStatus'] == 'no') {
+            userName = (value.snapshot.value as Map)['name'];
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const HomePage(),
+              ),
+            );
+          } else {
+            FirebaseAuth.instance.signOut();
+            commonMethods.displaySnackBar(
+                context, 'Your account is blocked. Contact the administrator.');
+          }
+        } else {
+          FirebaseAuth.instance.signOut();
+          commonMethods.displaySnackBar(context, 'Your account do not exists.');
+        }
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -76,13 +156,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       children: [
                         TextButton(
                           onPressed: () {
-                            // Navigator.push(
-                            //   context,
-                            //   MaterialPageRoute(
-                            //     builder: (context) => const SignUpScreen(),
-                            //   ),
-                            // );
-                            // criar pagina inicial
+                            checkIfNetworkIsAvailable();
                           },
                           child: const Text(
                             'Log in',

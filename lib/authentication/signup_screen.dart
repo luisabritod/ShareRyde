@@ -1,8 +1,14 @@
+// ignore_for_file: body_might_complete_normally_catch_error, use_build_context_synchronously
+
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:share_ryde/authentication/authentication.dart';
 import 'package:share_ryde/authentication/utils/utils.dart';
 import 'package:share_ryde/methods/methods.dart';
+import 'package:share_ryde/pages/home_page.dart';
+import 'package:share_ryde/widgets/widgets.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -38,9 +44,53 @@ class _SignUpScreenState extends State<SignUpScreen> {
     } else if (passwordTextEditingController.text.trim().length < 6) {
       commonMethods.displaySnackBar(
           context, 'Your phone has to be at least 6 characters.');
+    } else {
+      registerNewUser();
     }
+  }
 
-    // register user
+  registerNewUser() async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) =>
+          const LoadingDialog(messageText: 'Registring your account...'),
+    );
+
+    final User? userFirebase = (await FirebaseAuth.instance
+            .createUserWithEmailAndPassword(
+      email: emailTextEditingController.text.trim(),
+      password: passwordTextEditingController.text.trim(),
+    )
+            .catchError((errorMensage) {
+      Navigator.pop(context);
+      commonMethods.displaySnackBar(
+        context,
+        errorMensage.toString(),
+      );
+    }))
+        .user;
+
+    if (!context.mounted) return;
+    Navigator.pop(context);
+
+    DatabaseReference usersRef =
+        FirebaseDatabase.instance.ref().child('users').child(userFirebase!.uid);
+    Map userDataMap = {
+      'name': nameTextEditingController.text.trim(),
+      'email': emailTextEditingController.text.trim(),
+      'phone': phoneTextEditingController.text.trim(),
+      'id': userFirebase.uid,
+      'blockStatus': 'no',
+    };
+    usersRef.set(userDataMap);
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const HomePage(),
+      ),
+    );
   }
 
   @override
@@ -123,16 +173,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       children: [
                         TextButton(
                           onPressed: () {
-                            if (checkIfNetworkIsAvailable() == true) {
-                            } else {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const LoginScreen(),
-                                ),
-                              );
-                            }
-                            //dar uma olhada nessa função aqui, não está entrando mesmo com internet
+                            checkIfNetworkIsAvailable();
                           },
                           child: const Text(
                             'Sign up',
@@ -148,7 +189,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   const SizedBox(
                     height: 20,
                   ),
-                  // const Text('Already have an account? log in'),
                   RichText(
                     text: TextSpan(
                       style: const TextStyle(

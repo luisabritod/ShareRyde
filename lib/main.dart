@@ -11,6 +11,7 @@ Future<void> main() async {
       options: DefaultFirebaseOptions.currentPlatform,
     );
   } catch (e) {
+    // ignore: avoid_print
     print('Error at initialization of firebase.');
   }
 

@@ -1,9 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:share_ryde/global/global.dart';
 
@@ -36,6 +35,20 @@ class _HomePageState extends State<HomePage> {
     controller.setMapStyle(googleMapTheme);
   }
 
+  getCurrentLiveLocationOfUser() async {
+    Position positionOfUser = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.bestForNavigation);
+    var currentPositionOfUser = positionOfUser;
+
+    LatLng postionOfUserInLatLng =
+        LatLng(currentPositionOfUser.latitude, currentPositionOfUser.longitude);
+
+    CameraPosition cameraPosition =
+        CameraPosition(target: postionOfUserInLatLng, zoom: 15);
+    controllerGoogleMap!
+        .animateCamera(CameraUpdate.newCameraPosition(cameraPosition));
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -49,6 +62,7 @@ class _HomePageState extends State<HomePage> {
               controllerGoogleMap = mapController;
               updateMapTheme(controllerGoogleMap!);
               googleMapsController.complete(controllerGoogleMap);
+              getCurrentLiveLocationOfUser();
             },
           )
         ],

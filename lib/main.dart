@@ -1,4 +1,5 @@
 import 'package:firebase_core/firebase_core.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'firebase_options.dart';
 import 'package:flutter/material.dart';
 import 'package:share_ryde/authentication/authentication.dart';
@@ -15,6 +16,12 @@ Future<void> main() async {
     print('Error at initialization of firebase.');
   }
 
+  await Permission.locationWhenInUse.isDenied.then((valueOfPermission) {
+    if (valueOfPermission) {
+      Permission.locationWhenInUse.request();
+    }
+  });
+
   runApp(const MyApp());
 }
 
@@ -26,7 +33,7 @@ class MyApp extends StatelessWidget {
     return const MaterialApp(
       title: 'Share Ryde',
       debugShowCheckedModeBanner: false,
-      home: SignUpScreen(),
+      home: LoginScreen(),
     );
   }
 }

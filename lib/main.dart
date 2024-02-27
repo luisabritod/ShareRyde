@@ -1,5 +1,7 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:share_ryde/pages/pages.dart';
 import 'firebase_options.dart';
 import 'package:flutter/material.dart';
 import 'package:share_ryde/authentication/authentication.dart';
@@ -30,10 +32,12 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
+    return MaterialApp(
       title: 'Share Ryde',
       debugShowCheckedModeBanner: false,
-      home: LoginScreen(),
+      home: FirebaseAuth.instance.currentUser == null
+          ? const LoginScreen()
+          : const HomePage(),
     );
   }
 }
